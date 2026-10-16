@@ -1,0 +1,27 @@
+{
+  "name": "ryoshoku",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "^1.4.3",
+    "@types/proper-lockfile": "^4.1.4",
+    "typescript": "7.0.2"
+  },
+  "dependencies": {
+    "discord.js": "14.27.0",
+    "proper-lockfile": "4.1.2",
+    "zod": "4.6.7"
+  },
+  "scripts": {
+    "start": "bun run src/cli.ts start",
+    "register": "bun run src/cli.ts register",
+    "update": "bun run src/cli.ts update",
+    "extract": "bun run src/cli.ts extract",
+    "reformat": "bun run src/cli.ts reformat",
+    "preview": "bun run src/cli.ts preview",
+    "test": "bun test",
+    "test:python": "uv run pytest -q",
+    "typecheck": "tsc --noEmit",
+    "benchmark": "uv run python scripts/benchmark.py"
+  }
+}
