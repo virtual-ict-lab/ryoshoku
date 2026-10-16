@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 mothue
+# SPDX-License-Identifier: GPL-3.0-only
+
 """Run OCR on a locally supplied PDF directory; no school documents are bundled."""
 import argparse
 import json

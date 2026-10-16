@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 mothue
+// SPDX-License-Identifier: GPL-3.0-only
+
 import { afterEach, expect, test } from "bun:test";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";

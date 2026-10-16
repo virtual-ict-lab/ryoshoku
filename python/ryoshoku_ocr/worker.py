@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 mothue
+# SPDX-License-Identifier: GPL-3.0-only
+
 """PDF -> raw OCR JSON. Stdout is a machine-readable protocol; logs use stderr."""
 import argparse
 from contextlib import redirect_stdout

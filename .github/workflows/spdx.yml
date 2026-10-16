@@ -1,0 +1,59 @@
+# SPDX-FileCopyrightText: 2026 mothue
+# SPDX-License-Identifier: GPL-3.0-only
+
+name: SPDX headers
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  spdx:
+    name: Check SPDX headers
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Check license and copyright headers
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+          import subprocess
+          import sys
+
+          prefixes = {
+              ".ts": "//", ".tsx": "//", ".js": "//", ".jsx": "//",
+              ".mjs": "//", ".cjs": "//", ".py": "#", ".sh": "#",
+              ".yml": "#", ".yaml": "#",
+          }
+          files = subprocess.check_output(["git", "ls-files", "-z"]).decode("utf-8").split("\0")
+          failures = []
+          checked = 0
+          for name in filter(None, files):
+              path = Path(name)
+              prefix = prefixes.get(path.suffix)
+              if prefix is None:
+                  continue
+              checked += 1
+              lines = path.read_text(encoding="utf-8").splitlines()
+              if lines and lines[0].startswith("#!"):
+                  lines = lines[1:]
+              copyright = rf"{re.escape(prefix)} SPDX-FileCopyrightText: [0-9]{{4}}(?:-[0-9]{{4}})? mothue"
+              license = f"{prefix} SPDX-License-Identifier: GPL-3.0-only"
+              if len(lines) < 2 or not re.fullmatch(copyright, lines[0]) or lines[1] != license:
+                  failures.append(name)
+
+          for name in failures:
+              print(f"{name}: expected SPDX copyright (year and mothue) and GPL-3.0-only headers at the top", file=sys.stderr)
+          if not checked:
+              sys.exit("No source files found for SPDX validation")
+          if failures:
+              sys.exit(1)
+          print(f"SPDX headers verified in {checked} files.")

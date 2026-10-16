@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 mothue
+// SPDX-License-Identifier: GPL-3.0-only
+
 import { REST, Routes } from "discord.js";
 import { z } from "zod";
 import { commandDefinitions } from "./commands";

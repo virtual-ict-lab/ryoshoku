@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 mothue
+# SPDX-License-Identifier: GPL-3.0-only
+
 """Exercise real PDF parsing using original, generated geometry, not school assets."""
 import io
 import pdfplumber

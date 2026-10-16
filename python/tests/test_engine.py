@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 mothue
+# SPDX-License-Identifier: GPL-3.0-only
+
 from PIL import Image
 import pytest
 import ryoshoku_ocr.engine as module

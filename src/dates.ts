@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 mothue
+// SPDX-License-Identifier: GPL-3.0-only
+
 export function dateInJapan(date = new Date()): string {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Tokyo",

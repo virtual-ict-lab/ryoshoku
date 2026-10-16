@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 mothue
+# SPDX-License-Identifier: GPL-3.0-only
+
 """Compare OCR to the 15 manually transcribed cells; --run repeats real inference."""
 import argparse,json,sys,time,unicodedata
 from pathlib import Path

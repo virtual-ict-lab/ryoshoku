@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 mothue
+// SPDX-License-Identifier: GPL-3.0-only
+
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve, join, dirname } from "node:path";
 import { createHash } from "node:crypto";

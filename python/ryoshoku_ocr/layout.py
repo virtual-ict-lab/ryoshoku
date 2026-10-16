@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 mothue
+# SPDX-License-Identifier: GPL-3.0-only
+
 """Find menu cells using PDF rules, never fixed pixels or equal-width columns."""
 from dataclasses import dataclass
 
@@ -36,7 +39,7 @@ def detect_layout(page) -> Layout:
     xs, ys = clustered(vertical), clustered(horizontal)
     if len(xs) < 4 or len(ys) < 8:
         raise ValueError('Unsupported menu grid: insufficient rules (scanned PDFs need a layout adapter)')
-    # The first narrow column contains 朝食/昼食/夕食, not a date.
+    # The first narrow column contains meal labels, not a date.
     if xs[1] - xs[0] > (xs[-1] - xs[0]) * .05:
         raise ValueError('Unsupported menu grid: missing meal-label column')
     xs = xs[1:]

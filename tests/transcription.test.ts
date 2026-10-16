@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2026 mothue
+// SPDX-License-Identifier: GPL-3.0-only
+
 import { expect, test } from "bun:test";
 import { normalizeText, transcribeMeal, buildMenu } from "../src/transcription";
 import { dateInJapan, addDays, weekdayDate } from "../src/dates";
