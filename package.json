@@ -13,12 +13,9 @@
     "zod": "4.6.7"
   },
   "scripts": {
-    "start": "bun run src/cli.ts start",
-    "register": "bun run src/cli.ts register",
-    "update": "bun run src/cli.ts update",
+    "start": "NODE_ENV=production bun run src/cli.ts start",
+    "dev": "NODE_ENV=development bun --watch --no-clear-screen src/cli.ts start",
     "extract": "bun run src/cli.ts extract",
-    "reformat": "bun run src/cli.ts reformat",
-    "preview": "bun run src/cli.ts preview",
     "test": "bun test",
     "test:python": "uv run pytest -q",
     "typecheck": "tsc --noEmit",

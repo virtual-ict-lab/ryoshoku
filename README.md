@@ -13,6 +13,8 @@ cp .env.example .env
 bun run start
 ```
 
+`start` runs the bot with `NODE_ENV=production`, without watching source files.
+
 ## Logging
 
 Logs are written to stderr in English. Timestamps use Japan Standard Time
@@ -48,7 +50,20 @@ Local transcription check:
 bun run extract /path/to/kondate.pdf
 ```
 
-Launch test:
+Start development mode:
 ```sh
-bun run start
+bun run dev
+```
+
+`dev` sets `NODE_ENV=development` and restarts the process when source files
+change. Existing logs remain visible across restarts. Both modes register
+Discord commands and refresh menus automatically; bot tokens and data paths
+are controlled by the environment variables shown in `.env.example`.
+
+The maintenance commands remain available directly through the CLI:
+```sh
+bun run src/cli.ts register [--guild ID]
+bun run src/cli.ts update
+bun run src/cli.ts reformat /path/to/raw.json
+bun run src/cli.ts preview [--date YYYY-MM-DD]
 ```
