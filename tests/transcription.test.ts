@@ -28,13 +28,13 @@ test("calculates dates in JST over UTC midnight and month boundaries", () => {
   expect(addDays("2026-09-30", 1)).toBe("2026-10-01");
   expect(weekdayDate("2026-10-18", 0)).toBe("2026-10-12");
 });
-export function rawFixture(): RawDocument {
+export function rawFixture(columns = 5): RawDocument {
   return {
     schemaVersion: 1,
     engine: "PP-OCRv6-medium",
     headerText: "期間：2026/9/30～2026/10/4",
-    columns: 5,
-    cells: Array.from({ length: 5 }, (_, column) =>
+    columns,
+    cells: Array.from({ length: columns }, (_, column) =>
       ["breakfast", "lunch", "dinner"].map((meal) => ({
         column,
         meal,
@@ -80,6 +80,29 @@ test("rejects missing cells and contradictory date ranges", () => {
   expect(() =>
     buildMenu(other, "a".repeat(64), "2026-10-16T00:00:00.000Z"),
   ).toThrow();
+});
+
+test.each([
+  ["年月日 ：2026年10月19日 (月) ～ 2026年10月25日 (日)", 7, "2026-10-19", "2026-10-25"],
+  ["期間：２０２６年９月３０日（水）～２０２６年１０月４日（日）", 5, "2026-09-30", "2026-10-04"],
+  ["期間：2026年9月30日～2026年10月4日", 5, "2026-09-30", "2026-10-04"],
+  ["期間：2026/9/30 (水) ～ 2026/10/4 (日)", 5, "2026-09-30", "2026-10-04"],
+] as const)("reads the printed date range: %s", (header, columns, startDate, endDate) => {
+  const raw = rawFixture(columns);
+  raw.headerText = header;
+  const menu = buildMenu(raw, "a".repeat(64), "2026-10-17T00:00:00.000Z");
+  expect(menu.startDate).toBe(startDate);
+  expect(menu.endDate).toBe(endDate);
+  expect(menu.days[0]!.date).toBe(startDate);
+  expect(menu.days.at(-1)!.date).toBe(endDate);
+});
+
+test("rejects invalid Japanese dates and inconsistent printed ranges", () => {
+  const raw = rawFixture();
+  raw.headerText = "2026年2月30日(月)～2026年3月6日(金)";
+  expect(() => buildMenu(raw, "a".repeat(64), "2026-10-17T00:00:00.000Z")).toThrow("Invalid date");
+  raw.headerText = "2026年10月19日(月)～2026年10月25日(日)";
+  expect(() => buildMenu(raw, "a".repeat(64), "2026-10-17T00:00:00.000Z")).toThrow("number of day columns");
 });
 
 test("does not silently claim an empty OCR cell is a verified blank meal", () => {

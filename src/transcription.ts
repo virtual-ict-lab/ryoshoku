@@ -37,7 +37,10 @@ export function buildMenu(
   fetchedAt: string,
 ): WeeklyMenu {
   const raw = RawDocumentSchema.parse(input);
-  const header = normalizeText(raw.headerText).replace(/\s/g, "");
+  const header = normalizeText(raw.headerText)
+    .replace(/\s/g, "")
+    .replace(/(\d{4})年(\d{1,2})月(\d{1,2})日/g, "$1/$2/$3")
+    .replace(/\([月火水木金土日]\)/g, "");
   const m = header.match(
     /(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})[~〜～―-]+(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})/,
   );
