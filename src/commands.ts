@@ -101,7 +101,7 @@ export function makeEmbed(day: DailyMenu, label: string): EmbedBuilder {
         value: clipped(
           day[key].text || "読み取り結果なし（未提供・認識失敗の可能性）",
         ),
-        inline: false,
+        inline: true,
       })),
     )
     .setFooter(serviceFooter);
