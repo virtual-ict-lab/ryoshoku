@@ -32,7 +32,7 @@ const weekdays = [
 const serviceFooter = {
   text: "香川高専 寮食検索サービス",
   iconURL:
-    "https://pbs.twimg.com/profile_images/1931308501902692352/E5roil8I_400x400.jpg",
+    "https://raw.githubusercontent.com/virtual-ict-lab/knct-ryoshoku/refs/heads/main/assets/ryoshoku.png",
 };
 
 // TODO: コマンドの改善
