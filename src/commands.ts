@@ -12,7 +12,8 @@ import {
 
 import { PDF_URL, type Config } from "./config";
 import { dateInJapan, addDays, weekdayDate } from "./dates";
-import type { DailyMenu } from "./model";
+import type { DailyMenu, Meal } from "./model";
+import { normalizeText } from "./transcription";
 import { MenuStore } from "./store";
 import { updateMenu } from "./update";
 import { createLogger, elapsed } from "./logger";
@@ -81,11 +82,32 @@ export function isAdminAllowed(
   return Boolean(configuredGuild && guild === configuredGuild && administrator);
 }
 
+function mealFieldValue(meal: Meal): string {
+  // Cached warnings retain the original OCR text; match its normalized display form.
+  const uncertain = new Set(
+    meal.warnings.flatMap((warning) => {
+      const match = warning.match(/^OCR要確認 \([\d.]+\): ([\s\S]*)$/);
+      return match ? normalizeText(match[1]!).split("\n") : [];
+    }),
+  );
+  const omitted = meal.warnings.filter((warning) =>
+    warning.startsWith("低信頼度のため表示省略 ("),
+  ).length;
+  let text = meal.text
+    ? meal.text.split("\n")
+      .map((line) => uncertain.has(line) ? `⚠️ ${line}` : line)
+      .join("\n")
+    : `${meal.warnings.length ? "⚠️ " : ""}読み取り結果なし（未提供・認識失敗の可能性）`;
+  const notice = omitted ? `\n\n⚠️ 認識が不確かな${omitted}行を省略` : "";
+  const limit = 1024 - notice.length;
+  if (text.length > limit) {
+    const continuation = "\n…続きは原PDFを確認してください";
+    text = text.slice(0, limit - continuation.length) + continuation;
+  }
+  return text + notice;
+}
+
 export function makeEmbed(day: DailyMenu, label: string): EmbedBuilder {
-  const clipped = (value: string) =>
-    value.length <= 1024
-      ? value
-      : value.slice(0, 1000) + "\n…続きは原PDFを確認してください";
   const search = weekdays.includes(label) || label === "曜日検索";
   return new EmbedBuilder()
     .setTitle("日付")
@@ -98,9 +120,7 @@ export function makeEmbed(day: DailyMenu, label: string): EmbedBuilder {
     .addFields(
       ...(["breakfast", "lunch", "dinner"] as const).map((key, i) => ({
         name: ["朝食", "昼食", "夕食"][i]!,
-        value: clipped(
-          day[key].text || "読み取り結果なし（未提供・認識失敗の可能性）",
-        ),
+        value: mealFieldValue(day[key]),
         inline: true,
       })),
     )
@@ -155,7 +175,7 @@ export function responseFor(
   if (
     [day.breakfast, day.lunch, day.dinner].some((meal) => meal.warnings.length)
   )
-    notices.push("OCRの認識が不確かな行があります");
+    notices.push("⚠️ の箇所は読み取り結果の確認が必要です");
   return {
     ephemeral,
     ...(notices.length ? { content: notices.join("\n") } : {}),
