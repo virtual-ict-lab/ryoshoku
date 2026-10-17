@@ -31,6 +31,28 @@ export async function main(args = process.argv.slice(2)): Promise<void> {
   const [command, file] = positionals;
   const config = loadConfig();
   if (command === "start") {
+    const metadata: { version?: string } = JSON.parse(
+      await readFile(new URL("../package.json", import.meta.url), "utf8"),
+    );
+    const version = metadata.version?.trim();
+    const color = Boolean(
+      process.stdout.isTTY &&
+      !("NO_COLOR" in process.env) &&
+      process.env.TERM !== "dumb",
+    );
+    const sky = color ? "\x1b[38;2;135;206;250m" : "";
+    const dim = color ? "\x1b[2m" : "";
+    const reset = color ? "\x1b[0m" : "";
+    const banner = [
+      "                         __           __",
+      ".----.--.--.-----.-----.|  |--.-----.|  |--.--.--.",
+      "|   _|  |  |  _  |__ --||     |  _  ||    <|  |  |",
+      "|__| |___  |_____|_____||__|__|_____||__|__|_____|",
+      "     |_____|",
+      "",
+      `  knct-ryoshoku ${version ? `v${version}` : "dev"}`,
+    ].join("\n");
+    console.log(`\n${sky}${banner}${reset}\n${dim}  Bun v${Bun.version}${reset}\n`);
     await (await import("./bot")).startBot();
     return;
   }
