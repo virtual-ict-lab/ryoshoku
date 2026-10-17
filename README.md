@@ -13,6 +13,23 @@ cp .env.example .env
 bun run start
 ```
 
+## Logging
+
+Logs are written to stderr in English. Timestamps use Japan Standard Time
+(JST, UTC+09:00) with milliseconds; durations use seconds with three decimal places.
+
+```text
+2026-10-17 18:30:02.123 INFO  [discord::gateway] Connected shard=0
+2026-10-17 18:30:18.360 INFO  [menu::update] Menu updated startDate=2026-10-12 endDate=2026-10-18 duration=15.237s
+2026-10-17 19:12:00.456 WARN  [discord::gateway] Reconnecting shard=0
+2026-10-17 19:12:02.789 INFO  [discord::gateway] Session resumed shard=0 replayedEvents=3
+```
+
+Levels and module names are colored in a terminal. Colors are disabled when
+stderr is redirected, `TERM=dumb`, or `NO_COLOR` is set. Connection changes,
+command execution, PDF downloads, OCR progress, menu updates, and shutdown are
+logged. Errors include their stack traces. CLI JSON results stay on stdout.
+
 ## Develop
 
 ### require

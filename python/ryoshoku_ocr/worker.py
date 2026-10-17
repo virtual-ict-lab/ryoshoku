@@ -7,6 +7,7 @@ from contextlib import redirect_stdout
 import json
 from pathlib import Path
 import sys
+import traceback
 import pdfplumber
 from .layout import detect_layout
 from .engine import OcrEngine
@@ -30,7 +31,7 @@ def transcribe_pdf(path, engine, dpi=240, debug_dir=None):
             if debug_dir:
                 target = Path(debug_dir); target.mkdir(parents=True, exist_ok=True)
                 image.save(target / f'{cell.column}-{cell.meal}.png')
-            print(f'OCR {cell.column+1}/{layout.columns} {cell.meal}: {len(lines)} lines', file=sys.stderr)
+            print(f'Processed cell column={cell.column+1}/{layout.columns} meal={cell.meal} lines={len(lines)}', file=sys.stderr, flush=True)
         return dict(schemaVersion=1, engine=engine.name, headerText=header, columns=layout.columns, cells=cells)
 
 
@@ -48,6 +49,7 @@ def main():
         print(json.dumps(result, ensure_ascii=False, allow_nan=False))
     except Exception as exc:
         print(f'OCR failed: {exc}', file=sys.stderr)
+        traceback.print_exc(file=sys.stderr)
         return 1
     return 0
 

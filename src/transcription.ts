@@ -41,13 +41,13 @@ export function buildMenu(
   const m = header.match(
     /(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})[~〜～―-]+(\d{4})[\/-](\d{1,2})[\/-](\d{1,2})/,
   );
-  if (!m) throw new Error("PDF本文の対象期間を読み取れません");
+  if (!m) throw new Error("Could not read the menu date range from the PDF");
   const startDate = printedDate(m[1]!, m[2]!, m[3]!);
   const endDate = printedDate(m[4]!, m[5]!, m[6]!);
   if (addDays(startDate, raw.columns - 1) !== endDate)
-    throw new Error("PDFの期間と日付列数が一致しません");
+    throw new Error("PDF date range does not match the number of day columns");
   if (raw.cells.length !== raw.columns * 3)
-    throw new Error("献立セルが不足しています");
+    throw new Error("Menu cells are missing");
   const warnings: string[] = [];
   const days = Array.from({ length: raw.columns }, (_, column) => {
     const result = {
@@ -58,7 +58,7 @@ export function buildMenu(
         (c) => c.column === column && c.meal === meal,
       );
       if (cells.length !== 1)
-        throw new Error("献立セルの重複または欠落があります");
+        throw new Error("Menu cells are duplicated or missing");
       const cell = cells[0]!;
       const issues = cell.lines
         .filter((l) => l.confidence < 0.85)
@@ -88,7 +88,7 @@ export function buildMenu(
     return result;
   });
   if (days.every((day) => meals.every((meal) => !day[meal].text)))
-    throw new Error("料理名を1件も読み取れません！！");
+    throw new Error("No dish names could be read from the menu");
   return WeeklyMenuSchema.parse({
     schemaVersion: 1,
     engine: raw.engine,

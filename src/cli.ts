@@ -14,8 +14,10 @@ import { MenuStore, atomicJson } from "./store";
 import { runOcr, updateMenu } from "./update";
 import { buildMenu } from "./transcription";
 import { RawDocumentSchema } from "./model";
+import { createLogger, elapsed } from "./logger";
 
-// TODO: ログを綺麗にしたい
+const log = createLogger("cli");
+
 export async function main(args = process.argv.slice(2)): Promise<void> {
   const { values, positionals } = parseArgs({
     args,
@@ -36,7 +38,6 @@ export async function main(args = process.argv.slice(2)): Promise<void> {
     if (!config.token) throw new Error("DISCORD_BOT_TOKEN is required");
     const rest = new REST({ version: "10" }).setToken(config.token);
     await registerCommands(rest, undefined, values.guild);
-    console.log("Discord commands registered");
     return;
   }
   if (command === "update") {
@@ -56,6 +57,7 @@ export async function main(args = process.argv.slice(2)): Promise<void> {
     return;
   }
   if (command === "extract" || command === "reformat") {
+    const started = performance.now();
     if (!file) throw new Error(`${command} requires a file path`);
     const input = resolve(file);
     const pdf =
@@ -79,7 +81,13 @@ export async function main(args = process.argv.slice(2)): Promise<void> {
     const output = resolve(values.output ?? join(target, "menu.json"));
     await mkdir(dirname(output), { recursive: true });
     await atomicJson(output, menu);
-    console.log(`Saved ${menu.startDate}..${menu.endDate} to ${output}`);
+    log.info("Menu saved", {
+      startDate: menu.startDate,
+      endDate: menu.endDate,
+      output,
+      duration: elapsed(started),
+      warnings: menu.warnings.length,
+    });
     return;
   }
   if (command === "preview") {
@@ -99,6 +107,6 @@ export async function main(args = process.argv.slice(2)): Promise<void> {
 
 if (import.meta.main)
   main().catch((error) => {
-    console.error(error instanceof Error ? error.message : String(error));
+    log.error("Command failed", { error });
     process.exitCode = 1;
   });

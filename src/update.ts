@@ -16,6 +16,12 @@ import { buildMenu } from "./transcription";
 import { MenuStore, atomicJson } from "./store";
 import { projectRoot, type Config } from "./config";
 import { lock as lockDirectory } from "proper-lockfile";
+import { createLogger, elapsed } from "./logger";
+
+const log = createLogger("menu::update");
+const downloadLog = createLogger("menu::download");
+const ocrLog = createLogger("ocr");
+const workerLog = createLogger("ocr::worker");
 
 const MAX_PDF_BYTES = 15 * 1024 * 1024;
 
@@ -24,6 +30,8 @@ export async function runOcr(
   config: Config,
   debugDir?: string,
 ): Promise<RawDocument> {
+  const started = performance.now();
+  ocrLog.info("Starting OCR", { model: config.modelSize });
   const args = [
     config.python,
     "-m",
@@ -48,21 +56,51 @@ export async function runOcr(
   }, config.ocrTimeoutMs);
   // Read both pipes immediately so a full stderr buffer cannot deadlock the worker.
   try {
+    const readStderr = async () => {
+      const decoder = new TextDecoder();
+      let pending = "";
+      let tail = "";
+      const consume = (text: string) => {
+        tail = (tail + text).slice(-2000);
+        pending += text;
+        const lines = pending.split(/\r?\n/);
+        pending = lines.pop()!;
+        for (const line of lines) if (line.trim()) workerLog.info(line);
+        // Bound memory even if a third-party library writes without newlines.
+        if (pending.length > 4096) {
+          workerLog.info(pending);
+          pending = "";
+        }
+      };
+      for await (const chunk of child.stderr) {
+        consume(decoder.decode(chunk, { stream: true }));
+      }
+      consume(decoder.decode());
+      if (pending.trim()) workerLog.info(pending);
+      return tail;
+    };
     const [stdout, stderr, code] = await Promise.all([
       new Response(child.stdout).text(),
-      new Response(child.stderr).text(),
+      readStderr(),
       child.exited,
     ]);
-    if (timedOut) throw new Error("OCR timed out");
+    if (timedOut) throw new Error(`OCR timed out after ${elapsed(started)}`);
     if (code !== 0)
       throw new Error(`OCR failed (exit ${code}): ${stderr.slice(-2000)}`);
-    return RawDocumentSchema.parse(JSON.parse(stdout));
+    const raw = RawDocumentSchema.parse(JSON.parse(stdout));
+    ocrLog.info("OCR completed", {
+      duration: elapsed(started),
+      cells: raw.cells.length,
+    });
+    return raw;
   } finally {
     clearTimeout(timer);
   }
 }
 
 async function downloadPdf(config: Config): Promise<Uint8Array> {
+  const started = performance.now();
+  downloadLog.info("Downloading menu PDF");
   const response = await fetch(config.pdfUrl, {
     signal: AbortSignal.timeout(config.fetchTimeoutMs),
     headers: { "User-Agent": "KNCT-RyoshokuBot/1.0" },
@@ -94,6 +132,7 @@ async function downloadPdf(config: Config): Promise<Uint8Array> {
   }
   if (new TextDecoder().decode(data.slice(0, 5)) !== "%PDF-")
     throw new Error("Response is not a PDF");
+  downloadLog.info("PDF downloaded", { bytes: size, duration: elapsed(started) });
   return data;
 }
 
@@ -124,6 +163,8 @@ async function performUpdate(
   config: Config,
   deps: { ocr?: (pdf: string, debugDir: string) => Promise<RawDocument> },
 ) {
+  const started = performance.now();
+  log.info("Checking menu");
   await mkdir(config.dataDir, { recursive: true });
   const lock = join(config.dataDir, ".update.lock");
   // Heartbeats keep active OCR protected, while a crashed process's lock expires.
@@ -141,7 +182,15 @@ async function performUpdate(
     const store = new MenuStore(config.dataDir);
     const weeks = await store.load();
     const existing = weeks.find((w) => w.sourceSha256 === hash);
-    if (existing) return { changed: false, menu: existing };
+    if (existing) {
+      log.info("Menu unchanged", {
+        startDate: existing.startDate,
+        endDate: existing.endDate,
+        duration: elapsed(started),
+      });
+      return { changed: false, menu: existing };
+    }
+    log.info("PDF changed; processing menu");
     staging = await mkdtemp(join(config.dataDir, ".ocr-"));
     const pdf = join(staging, "source.pdf");
     await writeFile(pdf, data);
@@ -167,6 +216,14 @@ async function performUpdate(
         throw error;
     }
     await store.save(menu);
+    log.info("Menu updated", {
+      startDate: menu.startDate,
+      endDate: menu.endDate,
+      duration: elapsed(started),
+    });
+    if (menu.warnings.length) {
+      log.warn("OCR results need review", { warnings: menu.warnings.length });
+    }
     return { changed: true, menu };
   } finally {
     try {

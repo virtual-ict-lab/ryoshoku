@@ -15,6 +15,9 @@ import { dateInJapan, addDays, weekdayDate } from "./dates";
 import type { DailyMenu } from "./model";
 import { MenuStore } from "./store";
 import { updateMenu } from "./update";
+import { createLogger, elapsed } from "./logger";
+
+const log = createLogger("discord::commands");
 
 const weekdays = [
   "月曜日",
@@ -165,6 +168,9 @@ export async function handleCommand(
   config: Config,
 ): Promise<void> {
   const name = interaction.commandName;
+  const started = performance.now();
+  let failed = false;
+  log.info("Command received", { command: name });
   try {
     if (name === "help") {
       await interaction.reply({
@@ -195,6 +201,7 @@ export async function handleCommand(
         ),
       )
     ) {
+      log.warn("Admin command denied", { command: name });
       await interaction.reply({
         content: "この管理コマンドを使う権限がありません。",
         flags: MessageFlags.Ephemeral,
@@ -248,10 +255,12 @@ export async function handleCommand(
     );
     await interaction.editReply({ ...message, allowedMentions: { parse: [] } });
   } catch (error) {
-    console.error(
-      `Command ${name} failed:`,
-      error instanceof Error ? error.message : String(error),
-    );
+    failed = true;
+    log.error("Command failed", {
+      command: name,
+      duration: elapsed(started),
+      error,
+    });
     const message = {
       content:
         "献立の処理に失敗しました。保存済みの献立データは保持しています。",
@@ -263,5 +272,12 @@ export async function handleCommand(
       await interaction
         .reply({ ...message, flags: MessageFlags.Ephemeral })
         .catch(() => {});
+  } finally {
+    if (!failed) {
+      log.info("Command completed", {
+        command: name,
+        duration: elapsed(started),
+      });
+    }
   }
 }
