@@ -83,11 +83,11 @@ test("missing tomorrow never substitutes today and replies privately", () => {
   expect(r.embeds).toBeUndefined();
   expect(responseFor("today", day, day.date).ephemeral).toBe(false);
 });
-test("admin commands require both configured guild and administrator permission", () => {
-  expect(isAdminAllowed("123", "123", true)).toBe(true);
-  expect(isAdminAllowed("123", "123", false)).toBe(false);
-  expect(isAdminAllowed("456", "123", true)).toBe(false);
-  expect(isAdminAllowed("123", undefined, true)).toBe(false);
+test("admin commands allow every listed user and deny everyone else", () => {
+  expect(isAdminAllowed("123", ["123", "456"])).toBe(true);
+  expect(isAdminAllowed("456", ["123", "456"])).toBe(true);
+  expect(isAdminAllowed("789", ["123", "456"])).toBe(false);
+  expect(isAdminAllowed("123", [])).toBe(false);
 });
 test("keeps legacy user command names and seven weekday choices", () => {
   const commands = commandDefinitions().map((c) => c.toJSON());

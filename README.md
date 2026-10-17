@@ -15,6 +15,24 @@ bun run start
 
 `start` runs the bot with `NODE_ENV=production`, without watching source files.
 
+Set `ADMIN_USER_IDS` to a comma-separated list of Discord user IDs to allow
+those users to run `/sr` and `/vj`, for example:
+
+```dotenv
+ADMIN_USER_IDS=123456789012345678,987654321098765432
+```
+
+Only the listed users can run these commands, regardless of server or Discord
+administrator permissions. Leaving the list empty disables both commands.
+This replaces `ADMIN_GUILD_ID`; use user IDs instead of a server ID. Restart
+the bot after changing the list. Global commands are re-registered automatically
+at startup to clear the previous administrator permission requirement. If you
+previously registered commands for specific guilds, re-register each guild once:
+
+```sh
+bun run src/cli.ts register --guild GUILD_ID
+```
+
 ## Logging
 
 Logs are written to stderr in English. Timestamps use Japan Standard Time

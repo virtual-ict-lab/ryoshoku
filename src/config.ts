@@ -18,6 +18,12 @@ export function loadConfig(
   const modelSize = env.OCR_MODEL_SIZE ?? "medium";
   if (!["small", "medium"].includes(modelSize))
     throw new Error("Invalid OCR_MODEL_SIZE");
+  const adminUserIds = [...new Set(
+    (env.ADMIN_USER_IDS ?? "").split(",").map((id) => id.trim()).filter(Boolean),
+  )];
+  if (adminUserIds.some((id) => !/^\d+$/.test(id))) {
+    throw new Error("ADMIN_USER_IDS must be a comma-separated list of Discord user IDs");
+  }
   return {
     dataDir: resolve(env.DATA_DIR ?? join(projectRoot, "data")),
     pdfUrl: env.PDF_URL ?? PDF_URL,
@@ -28,7 +34,7 @@ export function loadConfig(
     fetchTimeoutMs: positive("FETCH_TIMEOUT_SECONDS", 30) * 1000,
     updateIntervalMs: positive("UPDATE_INTERVAL_HOURS", 6) * 3600000,
     token: env.DISCORD_BOT_TOKEN,
-    adminGuildId: env.ADMIN_GUILD_ID,
+    adminUserIds,
   };
 }
 

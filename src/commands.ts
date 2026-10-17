@@ -5,7 +5,6 @@ import {
   AttachmentBuilder,
   EmbedBuilder,
   MessageFlags,
-  PermissionFlagsBits,
   SlashCommandBuilder,
   type ChatInputCommandInteraction,
 } from "discord.js";
@@ -66,20 +65,19 @@ export function commandDefinitions() {
     new SlashCommandBuilder()
       .setName("sr")
       .setDescription("管理者: 献立PDFを取得して更新します")
-      .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+      .setDefaultMemberPermissions(null),
     new SlashCommandBuilder()
       .setName("vj")
       .setDescription("管理者: 保存済み献立JSONを表示します")
-      .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+      .setDefaultMemberPermissions(null),
   ];
 }
 
 export function isAdminAllowed(
-  guild: string | null,
-  configuredGuild: string | undefined,
-  administrator: boolean,
+  userId: string,
+  adminUserIds: readonly string[],
 ): boolean {
-  return Boolean(configuredGuild && guild === configuredGuild && administrator);
+  return adminUserIds.includes(userId);
 }
 
 function mealFieldValue(meal: Meal): string {
@@ -213,13 +211,7 @@ export async function handleCommand(
     const admin = name === "sr" || name === "vj";
     if (
       admin &&
-      !isAdminAllowed(
-        interaction.guildId,
-        config.adminGuildId,
-        Boolean(
-          interaction.memberPermissions?.has(PermissionFlagsBits.Administrator),
-        ),
-      )
+      !isAdminAllowed(interaction.user.id, config.adminUserIds)
     ) {
       log.warn("Admin command denied", { command: name });
       await interaction.reply({

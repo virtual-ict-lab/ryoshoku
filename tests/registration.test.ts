@@ -35,6 +35,10 @@ test("registers commands using the authenticated application without a configure
     expect(
       (received[0]!.body as { name: string }[]).map((c) => c.name),
     ).toEqual(["today", "tomorrow", "search", "help", "privacy", "sr", "vj"]);
+    const commands = received[0]!.body as { name: string; default_member_permissions?: string | null }[];
+    for (const command of commands.filter((c) => ["sr", "vj"].includes(c.name))) {
+      expect(command.default_member_permissions).toBeNull();
+    }
   } finally {
     server.stop(true);
   }
