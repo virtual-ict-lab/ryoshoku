@@ -50,15 +50,14 @@ Local transcription check:
 bun run extract /path/to/kondate.pdf
 ```
 
-Start development mode:
+Start the bot:
 ```sh
-bun run dev
+bun run start
 ```
 
-`dev` sets `NODE_ENV=development` and restarts the process when source files
-change. Existing logs remain visible across restarts. Both modes register
-Discord commands and refresh menus automatically; bot tokens and data paths
-are controlled by the environment variables shown in `.env.example`.
+The bot registers Discord commands and refreshes menus automatically. Bot
+tokens and data paths are controlled by the environment variables shown in
+`.env.example`.
 
 The maintenance commands remain available directly through the CLI:
 ```sh
