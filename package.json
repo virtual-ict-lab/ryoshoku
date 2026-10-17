@@ -14,6 +14,8 @@
     "zod": "4.6.7"
   },
   "scripts": {
+    "setup": "bun run scripts/setup.ts",
+    "clean": "bun run scripts/clean.ts",
     "start": "NODE_ENV=production bun run src/cli.ts start",
     "extract": "bun run src/cli.ts extract",
     "test": "bun test",

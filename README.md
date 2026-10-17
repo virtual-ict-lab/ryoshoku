@@ -6,9 +6,7 @@ You can use it as a Discord bot.
 ## Deploy
 
 ```sh
-bun install --frozen-lockfile
-uv sync --frozen
-cp .env.example .env
+bun run setup
 # Set DISCORD_BOT_TOKEN as an environment variable
 bun run start
 ```
@@ -57,11 +55,30 @@ logged. Errors include their stack traces. CLI JSON results stay on stdout.
 - uv 0.12.23
 - Python >=3.11,<3.14
 
+Bun and uv must be installed first. uv prepares the Python environment and can
+download a compatible Python interpreter when needed.
+
 ```sh
-bun install --frozen-lockfile
-uv sync --frozen
-cp .env.example .env
+bun run setup
 ```
+
+`setup` installs JavaScript and Python development dependencies from the lockfiles,
+creates `.env` only when it is missing, and downloads the detection and recognition
+models selected by `OCR_MODEL_SIZE` into `OCR_MODEL_DIR`. It runs a generated-image
+OCR check so both models are loaded before the first menu request. Existing `.env`
+settings are preserved; environment variables take precedence. Set the Discord
+token in `.env` before starting the bot. Running `setup` again reuses installed
+dependencies and downloaded models.
+
+Remove project caches:
+```sh
+bun run clean
+```
+
+`clean` removes `__pycache__`, `.pytest_cache`, and `*.tsbuildinfo` within the
+project. It preserves `.env`, models, menu data, `node_modules`, and `.venv`,
+including configured model and data directories. It does not follow symlinks
+or clear shared package caches.
 
 Local transcription check:
 ```sh
